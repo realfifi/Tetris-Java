@@ -3,12 +3,18 @@ package org.example;
 import org.example.TetrisBlock.Block;
 import org.example.TetrisBlock.Blocks.*;
 import org.example.TetrisBlock.Cell;
+import org.example.UI.GamePanel;
+import org.example.UI.GameWindow;
+import org.example.UI.Statistics;
+import org.example.UI.StatisticsPanel;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class GameManager implements KeyListener {
+    public static final Color BACKGROUND_COLOR = new Color(20, 20, 30);
     public static final int TOTAL_BLOCKS_COUNT = 7;
     public static final int TILE_SIZE = 32; // px
     public static final int HEIGHT = 20; // tiles
@@ -16,38 +22,58 @@ public class GameManager implements KeyListener {
     private static final int WINDOW_WIDTH = WIDTH * TILE_SIZE; // px
     private static final int WINDOW_HEIGHT = HEIGHT * TILE_SIZE; //px
 
+    private int gameSpeed;
     private boolean isPlaying;
     private final GameWindow window;
-    private final GamePanel panel;
+    private final GamePanel gamePanel;
+    private final StatisticsPanel statsPanel;
 
     private Block currentBlock;
     private final Color[][] fallenMatrix;
 
+    private final Statistics statistics;
+
     public GameManager() {
         isPlaying = true;
         window = new GameWindow("Tetris", WINDOW_WIDTH, WINDOW_HEIGHT);
-        panel = new GamePanel(this, WINDOW_WIDTH, WINDOW_HEIGHT);
+        gamePanel = new GamePanel(this, WINDOW_WIDTH, WINDOW_HEIGHT);
+        gamePanel.addKeyListener(this);
 
         currentBlock = getRandomBlock();
         fallenMatrix = new Color[GameManager.HEIGHT][GameManager.WIDTH];
+        gameSpeed = 20;
 
-        panel.addKeyListener(this);
-        window.add(panel);
+        statistics = new Statistics();
+        statsPanel = new StatisticsPanel(statistics, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        JPanel holderPanel = new JPanel(new FlowLayout());
+        holderPanel.setBackground(BACKGROUND_COLOR);
+
+        holderPanel.add(gamePanel);
+        holderPanel.add(statsPanel);
+        window.add(holderPanel);
         window.pack();
         window.setVisible(true);
     }
 
     public void start() {
-        long lastUpdate = System.currentTimeMillis();
+        long lastTime = System.currentTimeMillis();
+        long lastSecondTime = System.currentTimeMillis();
+
         while (isPlaying) {
             long currentTime = System.currentTimeMillis();
 
-            if (currentTime - lastUpdate >= 500) {
+            if (currentTime - lastTime >= 10_000 / gameSpeed) {
                 update();
-                lastUpdate = currentTime;
+                lastTime = currentTime;
             }
 
-            panel.repaint();
+            if(currentTime - lastSecondTime >= 1000) {
+                statistics.incremenetTime();
+                lastSecondTime = currentTime;
+            }
+
+            gamePanel.repaint();
         }
     }
 
@@ -59,14 +85,15 @@ public class GameManager implements KeyListener {
             fillFallenMatrix();
             checkIfRowsFull();
 
-            if(currentBlock.getY() <= 0) {
-                // handle Game Over
+            if(currentBlock.getY() <= 1) {
+                isPlaying = false;
+                return;
             }
 
             currentBlock = getRandomBlock();
         }
 
-        panel.repaint();
+        statsPanel.updateStats();
     }
 
     public int getGhostY() {
@@ -101,6 +128,8 @@ public class GameManager implements KeyListener {
     }
 
     private void checkIfRowsFull() {
+        int deletedRows = 0;
+
         for(int row = HEIGHT - 1; row >= 0; --row) {
             boolean full = true;
 
@@ -114,7 +143,18 @@ public class GameManager implements KeyListener {
             if(full) {
                 deleteRow(row);
                 row++;
+                deletedRows++;
             }
+        }
+
+        if(deletedRows > 0) {
+            awardPoints(deletedRows);
+        }
+
+        int newLevel = (statistics.getLines() / 10) + 1;
+        if(newLevel > statistics.getLevel()) {
+            statistics.incrementLevel();
+            gameSpeed++;
         }
     }
 
@@ -124,6 +164,18 @@ public class GameManager implements KeyListener {
         }
 
         fallenMatrix[0] = new Color[WIDTH];
+
+        statistics.incrementLines();
+        statistics.incrementLines();
+    }
+
+    private void awardPoints(final int rows) {
+        switch(rows) {
+            case 1 -> statistics.addScore(40 * statistics.getLevel());
+            case 2 -> statistics.addScore(100 * statistics.getLevel());
+            case 3 -> statistics.addScore(300 * statistics.getLevel());
+            case 4 -> statistics.addScore(1200 * statistics.getLevel());
+        }
     }
 
     public Block getCurrentBlock() {

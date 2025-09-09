@@ -1,5 +1,6 @@
-package org.example;
+package org.example.UI;
 
+import org.example.GameManager;
 import org.example.TetrisBlock.Block;
 import org.example.TetrisBlock.Cell;
 
@@ -8,7 +9,7 @@ import java.awt.*;
 
 public class GamePanel extends JPanel {
 
-    public static final Color backgroundColor = new Color(30, 30, 50);
+    public static final Color BACKGROUND_COLOR = new Color(30, 30, 50);
 
     private final GameManager gameManager;
 
@@ -17,7 +18,7 @@ public class GamePanel extends JPanel {
         setPreferredSize(new Dimension(width, height));
         setFocusable(true);
         requestFocus();
-        setBackground(backgroundColor);
+        setBackground(BACKGROUND_COLOR);
 
         this.gameManager = gameManager;
     }
@@ -39,7 +40,7 @@ public class GamePanel extends JPanel {
                     g.setColor(fallenMatrix[row][col]);
                     g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
                     g.setStroke(new BasicStroke(5));
-                    g.setColor(GamePanel.backgroundColor);
+                    g.setColor(GamePanel.BACKGROUND_COLOR);
                     g.drawRect(col * tileSize, row * tileSize, tileSize, tileSize);
                 }
                 else {
@@ -59,7 +60,7 @@ public class GamePanel extends JPanel {
             g.setColor(new Color(currentBlockColor.getRed(), currentBlockColor.getGreen(), currentBlockColor.getBlue(), 70));
             g.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
             g.setStroke(new BasicStroke(5));
-            g.setColor(GamePanel.backgroundColor);
+            g.setColor(GamePanel.BACKGROUND_COLOR);
             g.drawRect(x * tileSize, y * tileSize, tileSize, tileSize);
         }
 

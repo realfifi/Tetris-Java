@@ -1,7 +1,7 @@
 package org.example.TetrisBlock;
 
 import org.example.GameManager;
-import org.example.GamePanel;
+import org.example.UI.GamePanel;
 
 import java.awt.*;
 
@@ -63,7 +63,7 @@ public abstract class Block {
            g.setColor(getColor());
            g.fillRect(drawX, drawY, GameManager.TILE_SIZE, GameManager.TILE_SIZE);
            g.setStroke(new BasicStroke(5));
-           g.setColor(GamePanel.backgroundColor);
+           g.setColor(GamePanel.BACKGROUND_COLOR);
            g.drawRect(drawX, drawY, GameManager.TILE_SIZE, GameManager.TILE_SIZE);
        }
     }

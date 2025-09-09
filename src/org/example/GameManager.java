@@ -166,7 +166,6 @@ public class GameManager implements KeyListener {
         fallenMatrix[0] = new Color[WIDTH];
 
         statistics.incrementLines();
-        statistics.incrementLines();
     }
 
     private void awardPoints(final int rows) {

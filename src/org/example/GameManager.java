@@ -3,67 +3,89 @@ package org.example;
 import org.example.TetrisBlock.Block;
 import org.example.TetrisBlock.Blocks.*;
 import org.example.TetrisBlock.Cell;
-import org.example.UI.GamePanel;
-import org.example.UI.GameWindow;
-import org.example.UI.Statistics;
-import org.example.UI.StatisticsPanel;
+import org.example.UI.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
+import static org.example.CustomColors.WINDOW_BACKGROUND_COLOR;
+
 public class GameManager implements KeyListener {
-    public static final Color BACKGROUND_COLOR = new Color(20, 20, 30);
     public static final int TOTAL_BLOCKS_COUNT = 7;
-    public static final int TILE_SIZE = 32; // px
+
+    public static final int CELL_SIZE = 32; // px
     public static final int HEIGHT = 20; // tiles
     public static final int WIDTH = 10; // tiles
-    private static final int WINDOW_WIDTH = WIDTH * TILE_SIZE; // px
-    private static final int WINDOW_HEIGHT = HEIGHT * TILE_SIZE; //px
+    public static final int PADDING = 4; // px
 
-    private int gameSpeed;
+    private static final int GAME_PANEL_WIDTH = WIDTH * CELL_SIZE + PADDING * 2; // px
+    private static final int GAME_PANEL_HEIGHT = HEIGHT * CELL_SIZE + PADDING * 2; // px
+
+    private static final int INFORMATION_PANEL_WIDTH = 250 + PADDING * 2; // px
+    private static final int INFORMATION_PANEL_HEIGHT= HEIGHT * CELL_SIZE + PADDING * 2; // px
+
+    private static final int WINDOW_WIDTH = WIDTH * CELL_SIZE; // px
+    private static final int WINDOW_HEIGHT = HEIGHT * CELL_SIZE; //px
+    private final double GAME_SPEED_MULTIPLIER = 1.1;
+    private final double GAME_SPEED_CONSTANT = 500;
+
+    private Thread gameThread;
+    private double gameSpeed;
     private boolean isPlaying;
     private final GameWindow window;
-    private final GamePanel gamePanel;
-    private final StatisticsPanel statsPanel;
 
     private Block currentBlock;
+    private Block nextBlock;
     private final Color[][] fallenMatrix;
 
+    private final InformationPanel informationPanel;
     private final Statistics statistics;
 
     public GameManager() {
-        isPlaying = true;
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(WINDOW_BACKGROUND_COLOR);
+
+        GamePanel gamePanel = new GamePanel(this, GAME_PANEL_WIDTH, GAME_PANEL_HEIGHT);
+
         window = new GameWindow("Tetris", WINDOW_WIDTH, WINDOW_HEIGHT);
-        gamePanel = new GamePanel(this, WINDOW_WIDTH, WINDOW_HEIGHT);
-        gamePanel.addKeyListener(this);
+        mainPanel.add(gamePanel);
 
         currentBlock = getRandomBlock();
+        nextBlock = getRandomBlock();
         fallenMatrix = new Color[GameManager.HEIGHT][GameManager.WIDTH];
-        gameSpeed = 20;
+        gameSpeed = 1.0;
 
         statistics = new Statistics();
-        statsPanel = new StatisticsPanel(statistics, WINDOW_WIDTH, WINDOW_HEIGHT);
+        informationPanel = new InformationPanel(statistics, nextBlock, INFORMATION_PANEL_WIDTH, INFORMATION_PANEL_HEIGHT);
+        mainPanel.add(informationPanel);
 
-        JPanel holderPanel = new JPanel(new FlowLayout());
-        holderPanel.setBackground(BACKGROUND_COLOR);
-
-        holderPanel.add(gamePanel);
-        holderPanel.add(statsPanel);
-        window.add(holderPanel);
+        window.add(mainPanel);
         window.pack();
         window.setVisible(true);
     }
 
-    public void start() {
+    public void startGame() {
+        isPlaying = true;
+        if(gameThread == null || !gameThread.isAlive()) {
+            gameThread = new Thread(this::runGameLoop);
+            gameThread.start();
+        }
+    }
+
+    public void stopGame() {
+        isPlaying = false;
+    }
+
+    private void runGameLoop() {
         long lastTime = System.currentTimeMillis();
         long lastSecondTime = System.currentTimeMillis();
 
         while (isPlaying) {
             long currentTime = System.currentTimeMillis();
 
-            if (currentTime - lastTime >= 10_000 / gameSpeed) {
+            if (currentTime - lastTime >= GAME_SPEED_CONSTANT / gameSpeed) {
                 update();
                 lastTime = currentTime;
             }
@@ -73,7 +95,7 @@ public class GameManager implements KeyListener {
                 lastSecondTime = currentTime;
             }
 
-            gamePanel.repaint();
+            window.repaint();
         }
     }
 
@@ -86,14 +108,16 @@ public class GameManager implements KeyListener {
             checkIfRowsFull();
 
             if(currentBlock.getY() <= 1) {
-                isPlaying = false;
+                stopGame();
                 return;
             }
 
-            currentBlock = getRandomBlock();
+            currentBlock = nextBlock;
+            nextBlock = getRandomBlock();
+            informationPanel.updateNextBlock(nextBlock);
         }
 
-        statsPanel.updateStats();
+        informationPanel.updateStats();
     }
 
     public int getGhostY() {
@@ -153,8 +177,7 @@ public class GameManager implements KeyListener {
 
         int newLevel = (statistics.getLines() / 10) + 1;
         if(newLevel > statistics.getLevel()) {
-            statistics.incrementLevel();
-            gameSpeed++;
+            levelUp();
         }
     }
 
@@ -168,6 +191,11 @@ public class GameManager implements KeyListener {
         statistics.incrementLines();
     }
 
+    private void levelUp() {
+        statistics.incrementLevel();
+        gameSpeed *= GAME_SPEED_MULTIPLIER;
+    }
+
     private void awardPoints(final int rows) {
         switch(rows) {
             case 1 -> statistics.addScore(40 * statistics.getLevel());
@@ -176,15 +204,6 @@ public class GameManager implements KeyListener {
             case 4 -> statistics.addScore(1200 * statistics.getLevel());
         }
     }
-
-    public Block getCurrentBlock() {
-        return currentBlock;
-    }
-
-    public Color[][] getFallenMatrix() {
-        return fallenMatrix;
-    }
-
 
     private boolean canMoveHorizontal(int dx) {
         return !doesCollideAt(currentBlock.getCurrentRotation(), dx, 0);
@@ -217,6 +236,14 @@ public class GameManager implements KeyListener {
             }
         }
         return false;
+    }
+
+    public Block getCurrentBlock() {
+        return currentBlock;
+    }
+
+    public Color[][] getFallenMatrix() {
+        return fallenMatrix;
     }
 
     @Override

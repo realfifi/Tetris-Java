@@ -1,15 +1,15 @@
 package org.example.UI;
 
+import org.example.CustomColors;
 import org.example.GameManager;
 import org.example.TetrisBlock.Block;
 import org.example.TetrisBlock.Cell;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class GamePanel extends JPanel {
-
-    public static final Color BACKGROUND_COLOR = new Color(30, 30, 50);
 
     private final GameManager gameManager;
 
@@ -18,7 +18,9 @@ public class GamePanel extends JPanel {
         setPreferredSize(new Dimension(width, height));
         setFocusable(true);
         requestFocus();
-        setBackground(BACKGROUND_COLOR);
+        setBackground(CustomColors.GAME_PANEL_BACKGROUND_COLOR);
+        setBorder(new EmptyBorder(GameManager.PADDING, GameManager.PADDING, GameManager.PADDING, GameManager.PADDING));
+        addKeyListener(gameManager);
 
         this.gameManager = gameManager;
     }
@@ -28,8 +30,10 @@ public class GamePanel extends JPanel {
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics;
 
-        final int tileSize = GameManager.TILE_SIZE;
+        // Move the coordinates by padding
+        g.translate(GameManager.PADDING, GameManager.PADDING);
 
+        final int tileSize = GameManager.CELL_SIZE;
         final Color[][] fallenMatrix = gameManager.getFallenMatrix();
         final Block currentBlock = gameManager.getCurrentBlock();
 
@@ -40,7 +44,7 @@ public class GamePanel extends JPanel {
                     g.setColor(fallenMatrix[row][col]);
                     g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
                     g.setStroke(new BasicStroke(5));
-                    g.setColor(GamePanel.BACKGROUND_COLOR);
+                    g.setColor(CustomColors.GAME_PANEL_BACKGROUND_COLOR);
                     g.drawRect(col * tileSize, row * tileSize, tileSize, tileSize);
                 }
                 else {
@@ -57,11 +61,9 @@ public class GamePanel extends JPanel {
             int y = gameManager.getGhostY() + cell.getY();
             int x = currentBlock.getX() + cell.getX();
 
-            g.setColor(new Color(currentBlockColor.getRed(), currentBlockColor.getGreen(), currentBlockColor.getBlue(), 70));
-            g.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-            g.setStroke(new BasicStroke(5));
-            g.setColor(GamePanel.BACKGROUND_COLOR);
-            g.drawRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            g.setStroke(new BasicStroke(3));
+            g.setColor(CustomColors.GAME_PANEL_BACKGROUND_COLOR.brighter());
+            g.drawRect(x * tileSize + 3, y * tileSize + 3, tileSize - 6, tileSize - 6);
         }
 
         currentBlock.draw(g);

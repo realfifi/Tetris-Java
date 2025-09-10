@@ -1,5 +1,6 @@
 package org.example.TetrisBlock.Blocks;
 
+import org.example.CustomColors;
 import org.example.TetrisBlock.Block;
 import org.example.TetrisBlock.Cell;
 
@@ -23,7 +24,6 @@ public class TBlock extends Block {
 
     @Override
     public Color getColor() {
-        // Purple
-        return new Color(150, 0, 150);
+        return CustomColors.PURPLE;
     }
 }

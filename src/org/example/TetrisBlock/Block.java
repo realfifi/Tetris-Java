@@ -1,5 +1,6 @@
 package org.example.TetrisBlock;
 
+import org.example.CustomColors;
 import org.example.GameManager;
 import org.example.UI.GamePanel;
 
@@ -57,14 +58,14 @@ public abstract class Block {
     public void draw(Graphics2D g) {
 
        for(Cell cell : cells[currentRotation]) {
-           int drawX = (x + cell.getX()) * GameManager.TILE_SIZE;
-           int drawY = (y + cell.getY()) * GameManager.TILE_SIZE;
+           int drawX = (x + cell.getX()) * GameManager.CELL_SIZE;
+           int drawY = (y + cell.getY()) * GameManager.CELL_SIZE;
 
            g.setColor(getColor());
-           g.fillRect(drawX, drawY, GameManager.TILE_SIZE, GameManager.TILE_SIZE);
+           g.fillRect(drawX, drawY, GameManager.CELL_SIZE, GameManager.CELL_SIZE);
            g.setStroke(new BasicStroke(5));
-           g.setColor(GamePanel.BACKGROUND_COLOR);
-           g.drawRect(drawX, drawY, GameManager.TILE_SIZE, GameManager.TILE_SIZE);
+           g.setColor(CustomColors.GAME_PANEL_BACKGROUND_COLOR);
+           g.drawRect(drawX, drawY, GameManager.CELL_SIZE, GameManager.CELL_SIZE);
        }
     }
 }
